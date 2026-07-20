@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root alias_model_name="payment_platform"
+      chinese_name="Payment Service"
+      english_name="Payment Service"
+      data_service="postgres"
+      name="payment-service"
+      org="doublechaintech"
+      _module_key="root">
+
+    <platform
+        _name="System Platform"
+        _module="Platform"
+        _module_key="platform"
+        name="Payment Platform"
+        create_time="createTime()"
+        update_time="updateTime()"
+    />
+
+    <cached_merchant
+        _name="Cached Merchant"
+        _module="Payment Core"
+        _module_key="payment-core"
+        app_key="key_abc123"
+        is_active="true"
+        platform="platform()"
+        create_time="createTime()"
+        update_time="updateTime()"
+    />
+
+    <payment_order
+        _name="Payment Order"
+        _module="Payment Core"
+        _module_key="payment-core"
+        merchant_id="merchant_123"
+        merchant_order_no="ord_987654"
+        amount="99.90"
+        currency="CNY"
+        status="payment_status_type()"
+        client_ip="127.0.0.1"
+        platform="platform()"
+        create_time="createTime()"
+        update_time="updateTime()"
+        paid_at="updateTime()?"
+    />
+
+    <payment_record
+        _name="Payment Record"
+        _module="Payment Core"
+        _module_key="payment-core"
+        channel="payment_channel_type()"
+        channel_trade_no="trade_987654"
+        extra_params="{}"
+        order="payment_order()"
+        platform="platform()"
+        create_time="createTime()"
+        update_time="updateTime()"
+    />
+
+    <payment_status_type
+        _name="Payment Status Type"
+        _module="Payment Core"
+        _module_key="payment-core"
+        id="id()"
+        name="string()"
+        code="string()"
+        platform="platform(context)"
+        _constant="true"
+        _identifier="code"
+    >
+        <_value id="1001" name="Created" code="CREATED"/>
+        <_value id="1002" name="Paying" code="PAYING"/>
+        <_value id="1003" name="Success" code="SUCCESS"/>
+        <_value id="1004" name="Failed" code="FAILED"/>
+        <_value id="1005" name="Refunded" code="REFUNDED"/>
+    </payment_status_type>
+
+    <payment_channel_type
+        _name="Payment Channel Type"
+        _module="Payment Core"
+        _module_key="payment-core"
+        id="id()"
+        name="string()"
+        code="string()"
+        platform="platform(context)"
+        _constant="true"
+        _identifier="code"
+    >
+        <_value id="1001" name="Alipay" code="ALIPAY"/>
+        <_value id="1002" name="WeChat" code="WECHAT"/>
+        <_value id="1003" name="Stripe" code="STRIPE"/>
+    </payment_channel_type>
+</root>

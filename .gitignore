@@ -1,0 +1,13 @@
+# Maven target
+**/target/
+# Cargo target
+**/target/
+target/
+# IDEs
+.idea/
+.vscode/
+# Logs & env
+*.log
+.env
+# DB files
+*.db

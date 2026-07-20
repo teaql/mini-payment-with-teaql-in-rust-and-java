@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<root alias_model_name="merchant_platform"
+      chinese_name="Merchant Service"
+      english_name="Merchant Service"
+      data_service="postgres"
+      name="merchant-service"
+      org="doublechaintech"
+      _module_key="root">
+
+    <platform
+        _name="System Platform"
+        _module="Platform"
+        _module_key="platform"
+        name="Merchant Platform"
+        create_time="createTime()"
+        update_time="updateTime()"
+    />
+
+    <merchant
+        _name="Merchant"
+        _module="Merchant Core"
+        _module_key="merchant-core"
+        company_name="Acme Corp"
+        contact_email="admin@acme.com"
+        app_key="key_abc123"
+        status="merchant_status_type()"
+        platform="platform()"
+        create_time="createTime()"
+        update_time="updateTime()"
+    />
+
+    <merchant_kyc
+        _name="Merchant Kyc"
+        _module="Merchant Core"
+        _module_key="merchant-core"
+        business_license_no="LIC987654"
+        legal_person="John Doe"
+        bank_account_no="BANK987654321"
+        merchant="merchant()"
+        create_time="createTime()"
+        update_time="updateTime()"
+    />
+
+    <outbox_event
+        _name="Outbox Event"
+        _module="Integration"
+        _module_key="integration"
+        event_type="MERCHANT_UPSERT"
+        payload="{}"
+        status="event_status_type()"
+        merchant="merchant()"
+        create_time="createTime()"
+        update_time="updateTime()"
+        processed_at="updateTime()?"
+    />
+
+    <merchant_status_type
+        _name="Merchant Status Type"
+        _module="Merchant Core"
+        _module_key="merchant-core"
+        id="id()"
+        name="string()"
+        code="string()"
+        platform="platform(context)"
+        _constant="true"
+        _identifier="code"
+    >
+        <_value id="1001" name="Active" code="ACTIVE"/>
+        <_value id="1002" name="Pending Verification" code="PENDING_VERIFICATION"/>
+        <_value id="1003" name="Suspended" code="SUSPENDED"/>
+    </merchant_status_type>
+
+    <event_status_type
+        _name="Event Status Type"
+        _module="Integration"
+        _module_key="integration"
+        id="id()"
+        name="string()"
+        code="string()"
+        platform="platform(context)"
+        _constant="true"
+        _identifier="code"
+    >
+        <_value id="1001" name="Pending" code="PENDING"/>
+        <_value id="1002" name="Processed" code="PROCESSED"/>
+        <_value id="1003" name="Failed" code="FAILED"/>
+    </event_status_type>
+</root>
