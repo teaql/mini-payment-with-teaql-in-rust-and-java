@@ -39,12 +39,12 @@ The system is split into two microservices, following the **Database-per-Service
                                 +------+------+
 ```
 
-1. **Java Merchant Service** (`java-merchant-service/`):
+1. **Spring Cloud Merchant Service** (`spring-cloud-merchant-service/`):
    - Handles merchant registration, KYC document verification, and status updates (Pending -> Active -> Suspended).
    - Uses the **Transactional Outbox Pattern** via TeaQL. Status updates and outbox events are persisted in `merchant_db` in a single local transaction.
    - An asynchronous task triggers immediate sync post-commit. It queries **Nacos** to discover available instances of the Rust Payment Service and sends the sync payload using a LoadBalanced `RestTemplate`.
 
-2. **Rust Payment Service** (`rust-payment-service/`):
+2. **Axum Payment Service** (`axum-payment-service/`):
    - High-concurrency client-facing checkout service built with **Axum** and **TeaQL Cloud Starter**.
    - Upon startup, it automatically registers itself with the **Nacos Registry** (via `teaql-cloud-starter`), enabling Java services to discover and route traffic to it.
    - Maintains a local `CachedMerchant` table to authenticate incoming checkout calls instantly without making gRPC/HTTP round-trips to the Java service.
@@ -77,7 +77,7 @@ CREATE DATABASE payment_db;
 
 Navigate to the directory:
 ```bash
-cd java-merchant-service
+cd spring-cloud-merchant-service
 ```
 
 First, compile and install the generated TeaQL domain library:
@@ -98,7 +98,7 @@ The service will start on port `8081` (or as configured in `application.properti
 
 Navigate to the directory:
 ```bash
-cd rust-payment-service
+cd axum-payment-service
 ```
 
 Set the database environment variables:

@@ -46,11 +46,11 @@ services:
       timeout: 5s
       retries: 5
 
-  java-merchant-service:
-    image: teaql/java-merchant-service:latest
-    container_name: java-merchant-service
+  spring-cloud-merchant-service:
+    image: teaql/spring-cloud-merchant-service:latest
+    container_name: spring-cloud-merchant-service
     build:
-      context: ./java-merchant-service
+      context: ./spring-cloud-merchant-service
       dockerfile: Dockerfile
     environment:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://merchant_db:5432/merchant_db
@@ -65,11 +65,11 @@ services:
       merchant_db:
         condition: service_healthy
 
-  rust-payment-service:
-    image: teaql/rust-payment-service:latest
-    container_name: rust-payment-service
+  axum-payment-service:
+    image: teaql/axum-payment-service:latest
+    container_name: axum-payment-service
     build:
-      context: ./rust-payment-service
+      context: ./axum-payment-service
       dockerfile: Dockerfile
     environment:
       - PAYMENT_SERVICE_CORE_DATABASE_URL=host=payment_db dbname=payment_db user=postgres password=postgres
