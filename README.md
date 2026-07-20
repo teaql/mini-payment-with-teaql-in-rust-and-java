@@ -12,20 +12,27 @@ The system is split into two microservices, following the **Database-per-Service
                   |  (Merchant Registry, KYC, Approvals)    |
                   +--------------------+--------------------+
                                        |
-                                       | Writes Merchant & OutboxEvent
+                   (1) Writes Merchant & OutboxEvent
                                        v
                                 +------+------+
                                 | merchant_db |
                                 +------+------+
                                        |
-                                       | HTTP Sync Event
+                   (2) Fetches Target IP from Nacos
+                                       |
+                   +-------------------v-------------------+
+                   |          Nacos Registry               |
+                   |  (Service Discovery & Load Balancing) |
+                   +-------------------+-------------------+
+                                       |
+                   (3) HTTP Sync Event (Load Balanced)
                                        v
                   +--------------------+--------------------+
                   |         Rust Payment Service            |
                   |  (High-Concurrency Orders & webhooks)   |
                   +--------------------+--------------------+
                                        |
-                                       | Writes Orders & Cached Merchants
+                   (4) Writes Orders & Cached Merchants
                                        v
                                 +------+------+
                                 | payment_db  |
@@ -35,10 +42,11 @@ The system is split into two microservices, following the **Database-per-Service
 1. **Java Merchant Service** (`java-merchant-service/`):
    - Handles merchant registration, KYC document verification, and status updates (Pending -> Active -> Suspended).
    - Uses the **Transactional Outbox Pattern** via TeaQL. Status updates and outbox events are persisted in `merchant_db` in a single local transaction.
-   - An asynchronous task triggers immediate sync post-commit, backed by a 5-second scheduled poll-and-retry worker to guarantee eventual consistency.
+   - An asynchronous task triggers immediate sync post-commit. It queries **Nacos** to discover available instances of the Rust Payment Service and sends the sync payload using a LoadBalanced `RestTemplate`.
 
 2. **Rust Payment Service** (`rust-payment-service/`):
    - High-concurrency client-facing checkout service built with **Axum** and **TeaQL Cloud Starter**.
+   - Upon startup, it automatically registers itself with the **Nacos Registry** (via `teaql-cloud-starter`), enabling Java services to discover and route traffic to it.
    - Maintains a local `CachedMerchant` table to authenticate incoming checkout calls instantly without making gRPC/HTTP round-trips to the Java service.
    - Exposes internal sync endpoints for Java to propagate merchant status changes, and webhook callback endpoints for payment gateways.
 
@@ -84,7 +92,7 @@ Now run the Spring Boot application:
 cd app
 mvn spring-boot:run
 ```
-The service will start on port `8080` (or as configured in `application.properties`).
+The service will start on port `8081` (or as configured in `application.properties`), and automatically register with the local Nacos server.
 
 ### 3. Run Rust Payment Service
 
