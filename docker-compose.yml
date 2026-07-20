@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  nacos:
+    image: nacos/nacos-server:v2.2.3
+    container_name: nacos
+    environment:
+      - PREFER_HOST_MODE=hostname
+      - MODE=standalone
+    ports:
+      - "8848:8848"
+      - "9848:9848"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  merchant_db:
+    image: postgres:15-alpine
+    container_name: merchant_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=merchant_db
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d merchant_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  payment_db:
+    image: postgres:15-alpine
+    container_name: payment_db
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=payment_db
+    ports:
+      - "5433:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d payment_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  java-merchant-service:
+    image: teaql/java-merchant-service:latest
+    container_name: java-merchant-service
+    build:
+      context: ./java-merchant-service
+      dockerfile: Dockerfile
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://merchant_db:5432/merchant_db
+      - SPRING_DATASOURCE_USERNAME=postgres
+      - SPRING_DATASOURCE_PASSWORD=postgres
+      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+    ports:
+      - "8081:8081"
+    depends_on:
+      nacos:
+        condition: service_healthy
+      merchant_db:
+        condition: service_healthy
+
+  rust-payment-service:
+    image: teaql/rust-payment-service:latest
+    container_name: rust-payment-service
+    build:
+      context: ./rust-payment-service
+      dockerfile: Dockerfile
+    environment:
+      - PAYMENT_SERVICE_CORE_DATABASE_URL=host=payment_db dbname=payment_db user=postgres password=postgres
+      - PAYMENT_SERVICE_CORE_DATABASE_USER=postgres
+      - PAYMENT_SERVICE_CORE_DATABASE_PASSWORD=postgres
+      - SCHEMA_MODE=execute
+      - TEAQL_NACOS_SERVER_ADDR=nacos:8848
+    ports:
+      - "8080:8080"
+    depends_on:
+      nacos:
+        condition: service_healthy
+      payment_db:
+        condition: service_healthy
