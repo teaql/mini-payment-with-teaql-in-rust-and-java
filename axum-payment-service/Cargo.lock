@@ -199,6 +199,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "axum-payment-service"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.7.9",
+ "chrono",
+ "payment-service-core",
+ "reqwest",
+ "rust_decimal",
+ "serde",
+ "serde_json",
+ "teaql-cloud-core",
+ "teaql-cloud-starter",
+ "teaql-runtime",
+ "tokio",
+]
+
+[[package]]
 name = "base64"
 version = "0.22.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1239,23 +1257,6 @@ dependencies = [
  "tokio",
  "tokio-postgres",
  "tokio-util",
-]
-
-[[package]]
-name = "payment-service-rust"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "axum 0.7.9",
- "chrono",
- "payment-service-core",
- "rust_decimal",
- "serde",
- "serde_json",
- "teaql-cloud-core",
- "teaql-cloud-starter",
- "teaql-runtime",
- "tokio",
 ]
 
 [[package]]

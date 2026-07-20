@@ -36,13 +36,34 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/pay/callback", post(payment_callback))
         .route("/api/pay/status", get(get_status))
         .route("/api/internal/sync-merchant", post(sync_merchant))
+        .route("/health", get(|| async { "OK" }))
         .with_state(state);
 
-    // 2. Start using the cloud starter (registers with Nacos, sets up actuator, and handles shutdown)
+    tokio::spawn(async {
+        let client = reqwest::Client::new();
+        let consul_addr = std::env::var("CONSUL_HTTP_ADDR").unwrap_or_else(|_| "127.0.0.1:8500".to_string());
+        let url = format!("http://{}/v1/agent/service/register", consul_addr);
+        let payload = serde_json::json!({
+            "ID": "axum-payment-service-1",
+            "Name": "axum-payment-service",
+            "Address": "axum-payment-service",
+            "Port": 8080,
+            "Check": {
+                "HTTP": "http://axum-payment-service:8080/health",
+                "Interval": "10s",
+                "Timeout": "2s"
+            }
+        });
+        tokio::time::sleep(std::time::Duration::from_secs(3)).await;
+        match client.put(&url).json(&payload).send().await {
+            Ok(_) => println!("Successfully registered with Consul at {}", consul_addr),
+            Err(e) => eprintln!("Failed to register with Consul: {}", e),
+        }
+    });
+
+    // 2. Start using the cloud starter (sets up actuator, and handles shutdown)
     CloudApp::new()
-        .nacos("127.0.0.1:8848")
-        .namespace("public")
-        .service_name("payment-service-rust")
+        .service_name("axum-payment-service")
         .port(8080)
         .routes(business_routes)
         .start()

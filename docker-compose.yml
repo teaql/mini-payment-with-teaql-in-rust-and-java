@@ -1,17 +1,16 @@
 version: '3.8'
 
 services:
-  nacos:
-    image: nacos/nacos-server:v2.2.3
-    container_name: nacos
+  consul:
+    image: hashicorp/consul:1.15
+    container_name: consul
     environment:
-      - PREFER_HOST_MODE=hostname
-      - MODE=standalone
+      - CONSUL_BIND_INTERFACE=eth0
+    command: "agent -dev -client 0.0.0.0"
     ports:
-      - "8848:8848"
-      - "9848:9848"
+      - "8500:8500"
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8848/nacos/v1/console/health/readiness"]
+      test: ["CMD", "curl", "-f", "http://localhost:8500/v1/status/leader"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -56,11 +55,12 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://merchant_db:5432/merchant_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_CLOUD_NACOS_DISCOVERY_SERVER_ADDR=nacos:8848
+      - SPRING_CLOUD_CONSUL_HOST=consul
+      - SPRING_CLOUD_CONSUL_PORT=8500
     ports:
       - "8081:8081"
     depends_on:
-      nacos:
+      consul:
         condition: service_healthy
       merchant_db:
         condition: service_healthy
@@ -76,11 +76,11 @@ services:
       - PAYMENT_SERVICE_CORE_DATABASE_USER=postgres
       - PAYMENT_SERVICE_CORE_DATABASE_PASSWORD=postgres
       - SCHEMA_MODE=execute
-      - TEAQL_NACOS_SERVER_ADDR=nacos:8848
+      - CONSUL_HTTP_ADDR=consul:8500
     ports:
       - "8080:8080"
     depends_on:
-      nacos:
+      consul:
         condition: service_healthy
       payment_db:
         condition: service_healthy
