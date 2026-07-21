@@ -47,9 +47,9 @@ public class OutboxService {
     }
 
     /**
-     * Scheduled fallback retry delivery. Runs every 5 seconds.
+     * Scheduled fallback retry delivery. Runs every 30 seconds.
      */
-    @Scheduled(fixedDelay = 5000)
+    @Scheduled(fixedDelay = 30000)
     public void pollAndSync() {
         try {
             UserContext systemCtx = createSystemContext();
@@ -119,6 +119,7 @@ public class OutboxService {
             payload.put("id", String.valueOf(merchant.getId()));
             payload.put("app_key", merchant.getAppKey());
             payload.put("is_active", merchant.isStatusActive());
+            payload.put("event_id", String.valueOf(event.getId()));
 
             // POST to Rust
             restTemplate.postForEntity(rustServiceUrl, payload, String.class);
@@ -131,7 +132,17 @@ public class OutboxService {
 
         } catch (Exception e) {
             log.error("Failed to sync outbox event " + event.getId() + " to Rust", e);
-            event.updateStatusToFailed();
+            int currentRetries = event.getRetryCount() == null ? 0 : event.getRetryCount();
+            event.updateRetryCount(currentRetries + 1);
+            String errorMsg = e.getMessage() != null && e.getMessage().length() > 200 ? e.getMessage().substring(0, 200) : e.getMessage();
+            event.updateLastError(errorMsg);
+            
+            if (currentRetries + 1 >= 3) {
+                event.updateStatusToDeadLetter();
+                log.error("Outbox event {} reached max retries. Moved to DEAD_LETTER.", event.getId());
+            } else {
+                event.updateStatusToFailed();
+            }
             event.auditAs("Sync failed: " + e.getMessage()).save(ctx);
         }
     }

@@ -18,6 +18,7 @@ use rust_decimal::Decimal;
 #[derive(Clone)]
 struct AppState {
     ctx: Arc<ServiceRuntime>,
+    processed_events: Arc<tokio::sync::RwLock<std::collections::HashSet<String>>>,
 }
 
 #[tokio::main]
@@ -29,6 +30,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     let state = AppState {
         ctx: Arc::new(runtime),
+        processed_events: Arc::new(tokio::sync::RwLock::new(std::collections::HashSet::new())),
     };
 
     let business_routes = Router::new()
@@ -36,27 +38,30 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .route("/api/pay/callback", post(payment_callback))
         .route("/api/pay/status", get(get_status))
         .route("/api/internal/sync-merchant", post(sync_merchant))
-        .route("/health", get(|| async { "OK" }))
+        .route("/health", get(|| async { Json(serde_json::json!({"status": "ok"})) }))
         .with_state(state);
 
     tokio::spawn(async {
         let client = reqwest::Client::new();
-        let consul_addr = std::env::var("CONSUL_HTTP_ADDR").unwrap_or_else(|_| "127.0.0.1:8500".to_string());
-        let url = format!("http://{}/v1/agent/service/register", consul_addr);
+        let consul_host = std::env::var("CONSUL_HOST").unwrap_or_else(|_| "http://consul:8500".to_string());
+        let ip = std::env::var("POD_IP").unwrap_or_else(|_| "axum-payment-service".to_string());
+        let port = 8080;
+        let url = format!("{}/v1/agent/service/register", consul_host);
+        
         let payload = serde_json::json!({
-            "ID": "axum-payment-service-1",
             "Name": "axum-payment-service",
-            "Address": "axum-payment-service",
-            "Port": 8080,
+            "Address": ip,
+            "Port": port,
             "Check": {
-                "HTTP": "http://axum-payment-service:8080/health",
+                "HTTP": format!("http://{}:{}/health", ip, port),
                 "Interval": "10s",
-                "Timeout": "2s"
+                "Timeout": "3s"
             }
         });
+        
         tokio::time::sleep(std::time::Duration::from_secs(3)).await;
         match client.put(&url).json(&payload).send().await {
-            Ok(_) => println!("Successfully registered with Consul at {}", consul_addr),
+            Ok(_) => println!("Successfully registered with Consul at {}", consul_host),
             Err(e) => eprintln!("Failed to register with Consul: {}", e),
         }
     });
@@ -115,6 +120,7 @@ struct MerchantSyncDto {
     id: String,
     app_key: String,
     is_active: bool,
+    event_id: String,
 }
 
 // --- Handlers ---
@@ -303,6 +309,16 @@ async fn sync_merchant(
     State(state): State<AppState>,
     Json(payload): Json<MerchantSyncDto>
 ) -> Result<StatusCode, (StatusCode, String)> {
+    let idempotency_key = format!("{}:{}", payload.id, payload.event_id);
+    {
+        let mut events = state.processed_events.write().await;
+        if events.contains(&idempotency_key) {
+            println!("Event {} already processed, skipping.", idempotency_key);
+            return Ok(StatusCode::OK);
+        }
+        events.insert(idempotency_key.clone());
+    }
+
     let merchant_id = payload.id.parse::<u64>().unwrap_or(0);
 
     // Check if merchant already exists to decide whether to update or create

@@ -52,6 +52,8 @@
         create_time="createTime()"
         update_time="updateTime()"
         processed_at="updateTime()?"
+        retry_count="0"
+        last_error="text()?"
     />
 
     <merchant_status_type
@@ -84,5 +86,6 @@
         <_value id="1001" name="Pending" code="PENDING"/>
         <_value id="1002" name="Processed" code="PROCESSED"/>
         <_value id="1003" name="Failed" code="FAILED"/>
+        <_value id="1004" name="Dead Letter" code="DEAD_LETTER"/>
     </event_status_type>
 </root>

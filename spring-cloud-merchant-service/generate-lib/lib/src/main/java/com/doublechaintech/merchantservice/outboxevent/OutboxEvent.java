@@ -36,6 +36,10 @@ public class OutboxEvent extends BaseEntity implements RemoteInput {
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
     private LocalDateTime processedAt;
+    public static final String RETRY_COUNT_PROPERTY = "retryCount";
+    public static final String LAST_ERROR_PROPERTY = "lastError";
+    private Integer retryCount;
+    private String lastError;
 
     public String getEventType(){
         return this.eventType;
@@ -57,6 +61,12 @@ public class OutboxEvent extends BaseEntity implements RemoteInput {
     }
     public LocalDateTime getProcessedAt(){
         return this.processedAt;
+    }
+    public Integer getRetryCount(){
+        return this.retryCount;
+    }
+    public String getLastError(){
+        return this.lastError;
     }
     public OutboxEvent updateEventType(String eventType){
         eventType = (eventType == null ? null : eventType.trim());
@@ -116,6 +126,23 @@ public class OutboxEvent extends BaseEntity implements RemoteInput {
         this.processedAt = processedAt;
         return this;
     }
+    public OutboxEvent updateRetryCount(Integer retryCount){
+        if(Objects.equals(this.retryCount, retryCount)){
+            return this;
+        }
+        handleUpdate(RETRY_COUNT_PROPERTY, getRetryCount(), retryCount);
+        this.retryCount = retryCount;
+        return this;
+    }
+    public OutboxEvent updateLastError(String lastError){
+        lastError = (lastError == null ? null : lastError.trim());
+        if(Objects.equals(this.lastError, lastError)){
+            return this;
+        }
+        handleUpdate(LAST_ERROR_PROPERTY, getLastError(), lastError);
+        this.lastError = lastError;
+        return this;
+    }
     public boolean isStatusPending(){
         return Objects.equals(getStatus(), Constants.EVENT_STATUS_TYPE_PENDING);
     }
@@ -136,6 +163,9 @@ public class OutboxEvent extends BaseEntity implements RemoteInput {
 
     public OutboxEvent updateStatusToFailed(){
         return updateStatus(Constants.EVENT_STATUS_TYPE_FAILED);
+    }
+    public OutboxEvent updateStatusToDeadLetter(){
+        return updateStatus(Constants.EVENT_STATUS_TYPE_DEAD_LETTER);
     }
 
     public static OutboxEvent refer(Long id){
@@ -179,6 +209,10 @@ public class OutboxEvent extends BaseEntity implements RemoteInput {
 
             case "processedAt": this.processedAt = (LocalDateTime) value; break;
 
+            case "retryCount": this.retryCount = value instanceof Number ? ((Number)value).intValue() : (Integer) value; break;
+
+            case "lastError": this.lastError = (value == null ? null : ((String)value).trim()); break;
+
             default: super.__internalSet(property, value);
         }
     }
@@ -194,6 +228,8 @@ public class OutboxEvent extends BaseEntity implements RemoteInput {
             case "createTime": return this.createTime;
             case "updateTime": return this.updateTime;
             case "processedAt": return this.processedAt;
+            case "retryCount": return this.retryCount;
+            case "lastError": return this.lastError;
             default: return super.__internalGet(property);
         }
     }

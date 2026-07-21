@@ -2,11 +2,11 @@ version: '3.8'
 
 services:
   consul:
-    image: hashicorp/consul:1.15
+    image: hashicorp/consul:1.17
     container_name: consul
     environment:
       - CONSUL_BIND_INTERFACE=eth0
-    command: "agent -dev -client 0.0.0.0"
+    command: agent -dev -client=0.0.0.0 -config-dir=/consul/config
     ports:
       - "8500:8500"
     healthcheck:
@@ -55,8 +55,7 @@ services:
       - SPRING_DATASOURCE_URL=jdbc:postgresql://merchant_db:5432/merchant_db
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
-      - SPRING_CLOUD_CONSUL_HOST=consul
-      - SPRING_CLOUD_CONSUL_PORT=8500
+      - CONSUL_HOST=consul
     ports:
       - "8081:8081"
     depends_on:
@@ -76,7 +75,8 @@ services:
       - PAYMENT_SERVICE_CORE_DATABASE_USER=postgres
       - PAYMENT_SERVICE_CORE_DATABASE_PASSWORD=postgres
       - SCHEMA_MODE=execute
-      - CONSUL_HTTP_ADDR=consul:8500
+      - CONSUL_HOST=http://consul:8500
+      - POD_IP=axum-payment-service
     ports:
       - "8080:8080"
     depends_on:

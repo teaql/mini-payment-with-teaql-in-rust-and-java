@@ -15,4 +15,6 @@ public interface Constants  {
   public static final EventStatusType EVENT_STATUS_TYPE_PENDING = EventStatusType.refer(EVENT_STATUS_TYPE_PENDING_ID);public static final long EVENT_STATUS_TYPE_PROCESSED_ID = 1002l ;
   public static final EventStatusType EVENT_STATUS_TYPE_PROCESSED = EventStatusType.refer(EVENT_STATUS_TYPE_PROCESSED_ID);public static final long EVENT_STATUS_TYPE_FAILED_ID = 1003l ;
   public static final EventStatusType EVENT_STATUS_TYPE_FAILED = EventStatusType.refer(EVENT_STATUS_TYPE_FAILED_ID);
+  public static final long EVENT_STATUS_TYPE_DEAD_LETTER_ID = 1004l;
+  public static final EventStatusType EVENT_STATUS_TYPE_DEAD_LETTER = EventStatusType.refer(EVENT_STATUS_TYPE_DEAD_LETTER_ID);
 }
