@@ -1,6 +1,19 @@
-# TeaQL Mini Payment Application
+# TeaQL Mini Payment Platform
 
-This repository showcases a hybrid **Java & Rust** microservice solution using **TeaQL** for typed modeling, secure transactions, and zero-code audit trails.
+**Java for business complexity. Rust for runtime-critical services.
+TeaQL for a consistent engineering experience.**
+
+This repository demonstrates how Java and Rust can coexist in a
+microservice-based payment platform without forcing services to share
+one domain model or one codebase.
+
+The Java service handles merchant onboarding, KYC, approvals and
+integration-heavy workflows. The Rust service handles client-facing
+payment execution, callbacks and high-concurrency workloads.
+
+Each service owns its domain model, database and deployment lifecycle.
+TeaQL provides a consistent way to model, query, audit, test and evolve
+both services.
 
 ## Architecture Overview
 
